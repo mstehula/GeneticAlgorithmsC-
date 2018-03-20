@@ -4,11 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using NeuralNetwork;
-
 namespace NeuralNetwork
 {
-    class NeuralNetwork
+    public class NeuralNetwork
     {
         private class Neuron
         {
@@ -302,7 +300,7 @@ namespace NeuralNetwork
     }
 
     [Serializable]
-    class NeuralNetworkSaveFile
+    public class NeuralNetworkSaveFile
     {
 
     }
