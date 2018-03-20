@@ -17,17 +17,16 @@ namespace NeuralNetwork
 
     abstract class ActivationFunction: IActivationFunction<double, double>
     {
+        public double H = .000001;
+
         public abstract double MinValue { get; set; }
         public abstract double MaxValue { get; set; }
 
         public abstract double Execute( double input );
-<<<<<<< Updated upstream
-=======
         public double ExecuteDerivative( double input )
         {
             return ( Execute( input + H ) - Execute( input - H ) ) / 2 * H;
         }
->>>>>>> Stashed changes
     }
 
     class SigmoidActivationFunction: IActivationFunction< double, double >
