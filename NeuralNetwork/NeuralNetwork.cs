@@ -94,10 +94,10 @@ namespace NeuralNetwork
             for ( int i = 1; i < _neurons.Length - 1; i++ )
             {
                 // Check to make sure the number of hidden neurons for layer i is non-zero and positive.
-                if ( numHiddenNeurons[ i ] <= 0 ) throw new InvalidNumberOfNeuronsException( "Number of neurons in a hidden layer cannot be zero or below" );
+                if ( numHiddenNeurons[ i - 1 ] <= 0 ) throw new InvalidNumberOfNeuronsException( "Number of neurons in a hidden layer cannot be zero or below" );
 
                 // Generate the array of hidden neurons for layer i
-                _neurons[ i ] = new Neuron[ numHiddenNeurons[ i ] ];
+                _neurons[ i - 1 ] = new Neuron[ numHiddenNeurons[ i - 1 ] ];
             }
             
             _neurons[ OutputNeurons ] = new Neuron[ numOutputNeurons ];
@@ -124,14 +124,22 @@ namespace NeuralNetwork
             // Loop through each layer of hidden neruon(s)
             for ( int i = 1; i < _neurons.Length - 1; i++ )
             {
+                _neurons[ i ] = new Neuron[ numHiddenNeurons[ i - 1] ];
+
                 // Loop through each hidden neuron we need to create in the layer
-                for ( int j = 0; j < numHiddenNeurons[ i ]; j++ )
+                for ( int j = 0; j < numHiddenNeurons[ i - 1 ]; j++ )
                 {
                     // Create the hidden neuron
                     _neurons[ i ][ j ] = new Neuron( function );
 
+                    // Create weights of size of i-1 layer
+                    _neurons[ i ][ j ].Weights = new double[ _neurons[ i - 1 ].Length ];
+
+                    // Create inputs of size of i-1 layer
+                    _neurons[ i ][ j ].Inputs = new double[ _neurons[ i - 1 ].Length ];
+
                     // Create the array of randomly assigned weights for each hidden neuron
-                    for ( int k = 0; k < _neurons[ i - j ].Length; k++ )
+                    for ( int k = 0; k < _neurons[ i ][ j ].Weights.Length; k++ )
                     {
                         _neurons[ i ][ j ].Weights[ k ] = random.NextDouble( );
                     }
@@ -146,9 +154,15 @@ namespace NeuralNetwork
             {
                 // Create output neuron
                 _neurons[ OutputNeurons ][ i ] = new Neuron( function );
-                
+
+                // Create weights of size of i-1 layer
+                _neurons[ OutputNeurons ][ i ].Weights = new double[ _neurons[ OutputNeurons - 1 ].Length ];
+
+                // Create inputs of size of i-1 layer
+                _neurons[ OutputNeurons ][ i ].Inputs = new double[ _neurons[ OutputNeurons - 1].Length ];
+
                 // Create the array of randomly assigned weights for each hidden neuron
-                for ( int j = 0; j < _neurons[0].Length; j++ )
+                for ( int j = 0; j < _neurons[ OutputNeurons ].Length; j++ )
                 {
                     _neurons[ OutputNeurons ][ i ].Weights[ j ] = random.NextDouble( );
                 }
@@ -204,14 +218,14 @@ namespace NeuralNetwork
             for ( int i = 0; i < _neurons.Length; i++ )
             {
                 // Each neuron in the layer
-                for ( int j = 0; j < _neurons[ i ].Length; i++ )
+                for ( int j = 0; j < _neurons[ i ].Length; j++ )
                 {
                     var output = 0.0;
 
                     // Each weight/input in the neuron, add up to get total output
-                    for ( int k = 0; k < _neurons[ i ][ j ].Weights.Length; k++ )
+                    for ( int k = 0; k < _neurons[ i ][ j ].Inputs.Length; k++ )
                     {
-                        output += _neurons[ i ][ j ].Weights[ k ] + _neurons[ i ][ j ].Inputs[ k ];
+                        output += _neurons[ i ][ j ].Weights[ k ] * _neurons[ i ][ j ].Inputs[ k ];
                     }
 
                     // Run through activator function, save to output
@@ -222,7 +236,7 @@ namespace NeuralNetwork
                     {
                         for ( int k = 0; k < _neurons[ i + 1 ].Length; k++ )
                         {
-                            _neurons[ i + 1 ][ k ].Weights[ j ] = _neurons[ i ][ j ].Output;
+                            _neurons[ i + 1 ][ k ].Inputs[ j ] = _neurons[ i ][ j ].Output;
                         }
                     }
                     // Else add it to the output array
@@ -250,10 +264,10 @@ namespace NeuralNetwork
 
             // Back propogate errors from outputs to the first hidden layer
             // For every layer in the network
-            for ( int i = OutputNeurons; i > InputNeurons; i++ )
+            for ( int i = OutputNeurons; i > InputNeurons; i-- )
             {
                 // For every neuron in the layer
-                for ( int j = 0; j < _neurons[i].Length; i++ )
+                for ( int j = 0; j < _neurons[i].Length; j++ )
                 {
                     // Uses output delta
                     if ( i == OutputNeurons )
@@ -279,7 +293,7 @@ namespace NeuralNetwork
                     }
                     
                     // Calculate new weights for each input
-                    for ( int k = 0; k < _neurons[ i ][ j ].Weights.Length; j++ )
+                    for ( int k = 0; k < _neurons[ i ][ j ].Weights.Length; k++ )
                     {
                         // Weight w* = w - a * delta * i;
                         _neurons[ i ][ j ].Weights[ k ] = _neurons[ i ][ j ].Weights[ k ] - _learningRate * _neurons[ i ][ j ].Delta * _neurons[ i ][ j ].Inputs[ k ];
