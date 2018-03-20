@@ -9,13 +9,13 @@ using NeuralNetwork;
 
 namespace NeuralNetwork
 {
-    interface IActivationFunction<O, I>
+    public interface IActivationFunction<O, I>
     {
         O Execute( I input );
         O ExecuteDerivative( I input );
     }
 
-    abstract class ActivationFunction: IActivationFunction<double, double>
+    public abstract class ActivationFunction: IActivationFunction<double, double>
     {
         public double H = .000001;
 
@@ -29,75 +29,47 @@ namespace NeuralNetwork
         }
     }
 
-    class SigmoidActivationFunction: IActivationFunction< double, double >
+    public class SigmoidActivationFunction : ActivationFunction, IActivationFunction< double, double >
     {
-        public double H = .000001;
+        public override double MinValue { get { return 0.0; } set { return; } }
+        public override double MaxValue { get { return 1.0; } set { return; } }
 
-        public double MinValue = 0.0;
-        public double MaxValue = 1.0;
-
-        public double Execute( double input )
+        public override double Execute( double input )
         {
             return 1 / ( 1 + Math.Exp( -input ) );
         }
-
-        public double ExecuteDerivative( double input )
-        {
-            return ( Execute( input + H ) - Execute( input - H ) ) / 2 * H;
-        }
     }
 
-    class MaxActivationFunction: IActivationFunction< double, double >
+    public class MaxActivationFunction : ActivationFunction, IActivationFunction< double, double >
     {
-        public double H = .000001;
+        public override double MinValue { get { return 0.0; } set { return; } }
+        public override double MaxValue { get { return Double.PositiveInfinity; } set { return; } }
 
-        public double MinValue = 0.0;
-        public double MaxValue = double.PositiveInfinity;
-
-        public double Execute( double input )
+        public override double Execute( double input )
         {
             return Math.Max( input, 0 );
         }
-
-        public double ExecuteDerivative( double input )
-        {
-            return ( Execute( input + H ) - Execute( input - H ) ) / 2 * H;
-        }
     }
 
-    class StandardActivationFunction: IActivationFunction< double, double >
+    public class StandardActivationFunction : ActivationFunction, IActivationFunction< double, double >
     {
-        public double H = .000001;
+        public override double MinValue { get { return Double.NegativeInfinity; } set { return; } }
+        public override double MaxValue { get { return Double.PositiveInfinity; } set { return; } }
 
-        public double MinValue = double.NegativeInfinity;
-        public double MaxValue = double.PositiveInfinity;
-
-        public double Execute( double input )
+        public override double Execute( double input )
         {
             return input;
         }
-
-        public double ExecuteDerivative( double input )
-        {
-            return ( Execute( input + H ) - Execute( input - H ) ) / 2 * H;
-        }
     }
 
-    class TanHActivationFunction: IActivationFunction< double, double >
+    public class TanHActivationFunction : ActivationFunction, IActivationFunction< double, double >
     {
-        public double H = .000001;
+        public override double MinValue { get { return -1.0; } set { return; } }
+        public override double MaxValue { get { return 1.0; } set { return; } }
 
-        public double MinValue = -1.0;
-        public double MaxValue = 1.0;
-
-        public double Execute( double input )
+        public override double Execute( double input )
         {
             return Math.Tanh( input );
-        }
-
-        public double ExecuteDerivative( double input )
-        {
-            return ( Execute( input + H ) - Execute( input - H ) ) / 2 * H;
         }
     }
 }
