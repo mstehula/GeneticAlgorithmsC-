@@ -6,5 +6,11 @@ using System.Threading.Tasks;
 
 namespace NeuralNetwork
 {
-   
+    class Program
+    {
+        public static void Main( string[ ] args )
+        {
+
+        }
+    }
 }

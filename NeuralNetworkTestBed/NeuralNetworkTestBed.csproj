@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{50501D4A-DE56-4B16-B1DD-70E15DE2C742}</ProjectGuid>
+    <ProjectGuid>{38BA02C5-2384-4234-8979-DC65244ABD4B}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NerualNetworkTest</RootNamespace>
-    <AssemblyName>NerualNetworkTest</AssemblyName>
+    <RootNamespace>NeuralNetworkTestBed</RootNamespace>
+    <AssemblyName>NeuralNetworkTestBed</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -48,6 +48,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NeuralNetwork\NeuralNetwork.csproj">
+      <Project>{e918b542-ffd5-4d75-98d7-bf1d90b053ff}</Project>
+      <Name>NeuralNetwork</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
