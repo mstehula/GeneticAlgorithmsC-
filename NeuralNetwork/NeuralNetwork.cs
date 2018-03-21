@@ -10,324 +10,226 @@ namespace NeuralNetwork
     {
         private class Neuron
         {
-            public IActivationFunction<double, double> Function { get; set; }
-
-            public double[ ] Inputs { get; set; }
+            public double BiasWeight { get; set; }
             public double[ ] Weights { get; set; }
             public double Output { get; set; }
-
             public double Delta { get; set; }
-
-            public Neuron( IActivationFunction<double, double> function )
-            {
-                Function = function;
-            }
         }
 
-        private Neuron[ ][ ] _neurons;
+        /// <summary>
+        /// 2D list of nuerons, seperated by layer
+        /// </summary>
+        private Neuron[ ][ ] Neurons;
 
         /// <summary>
         /// activator function for a given neural network
         /// </summary>
-        private IActivationFunction<double, double> _activatorFunction;
-
-        /// <summary>
-        /// Save the inputs/acutalOutputs/ExpectedOutputs for calculating back propogation
-        /// </summary>
-        private double[ ] _inputs;
-        private double[ ] _actualOutputs;
-        private double[ ] _expectedOutputs;
+        private IActivationFunction<double, double> ActivatorFunction;
 
         /// <summary>
         /// Learning rate for the back propogation
         /// </summary>
-        private double _learningRate { get; set; }
+        private double LearningRate { get; set; }
+
+        public double TotalError { get; set; }
 
         /// <summary>
-        /// Used to get the input neurons in the arrays
+        /// Random for reading random things
         /// </summary>
-        private int InputNeurons
-        {
-            get
-            {
-                return 0;
-            }
-        }
-
-        /// <summary>
-        /// Used to get the output neurons in the arrays
-        /// </summary>
-        private int OutputNeurons
-        {
-            get
-            {
-                return _neurons.Length - 1;
-            }
-        }
+        private static readonly Random Random = new Random( );
 
         /// <summary>
         /// Creates neural network from given inputs
         /// </summary>
-        public NeuralNetwork( int numInputNeurons, int numHiddenLayers, int[ ] numHiddenNeurons, int numOutputNeurons, IActivationFunction<double, double> function, double learningRate )
+        public NeuralNetwork( int[ ] layers, IActivationFunction<double, double> function, double learningRate )
         {
-            // Set the activation function
-            _activatorFunction = function;
-
-            // Set standard activation function for input neurons
-            var standardActivationFunction = new StandardActivationFunction( );
-
-            // Check to make sure the number of input, output neurons for this layer and hidden layers is non-zero and positive.
-            if ( numInputNeurons <= 0 ) throw new InvalidNumberOfNeuronsException( "Number of input neurons cannot be zero or below" );
-            if ( numHiddenLayers <= 0 ) throw new InvalidNumberOfLayersException( "Number of hidden layers cannot be zero or below" );
-            if ( numOutputNeurons <= 0 ) throw new InvalidNumberOfNeuronsException( "Number of outputN neurons cannot be zero or below" );
-
-            // Create the array of all neurons
-            _neurons = new Neuron[ 1 + numHiddenLayers + 1 ][ ];
-
-            // Set learning rate
-            _learningRate = learningRate;
-
-            // Create the array of input neurons, +1 for bais neuron
-            _neurons[ InputNeurons ] = new Neuron[ numInputNeurons + 1 ];
-
-            // Create the array(s) of hidden neurons with standard neurons
-            for ( int i = 1; i < _neurons.Length - 1; i++ )
+            ActivatorFunction = function;
+            LearningRate = learningRate;
+            
+            if ( layers.Length <= 1 ) throw new InvalidNumberOfLayersException( "Number of layers cannot 1 or below" );
+            for ( int i = 0; i < layers.Length; i++ )
             {
-                // Check to make sure the number of hidden neurons for layer i is non-zero and positive.
-                if ( numHiddenNeurons[ i - 1 ] <= 0 ) throw new InvalidNumberOfNeuronsException( "Number of neurons in a hidden layer cannot be zero or below" );
-
-                // Generate the array of hidden neurons for layer i, +1 for bias neuron
-                _neurons[ i ] = new Neuron[ numHiddenNeurons[ i - 1 ] + 1 ];
+                if ( layers[ i ] <= 0 )
+                {
+                    throw new InvalidNumberOfNeuronsException( "Number of neurons in a layer cannot be zero or below " );
+                }
             }
             
-            _neurons[ OutputNeurons ] = new Neuron[ numOutputNeurons ];
-
-            Random random = new Random( (int) DateTime.Now.Ticks );
+            Neurons = new Neuron[ layers.Length ][ ];
             
-            // Loop through each input neuron we need to create
-            for ( int i = 0; i < numInputNeurons; i++ )
+            for ( int l = 0; l < layers.Length; l++ )
             {
-                // Creates input neruons
-                _neurons[ 0 ][ i ] = new Neuron( function );
-
-                // Create inputs array of one long
-                _neurons[ 0 ][ i ].Inputs = new double[ 1 ];
+                Neuron[ ] layer = new Neuron[ layers[ l ] ];
+                Neurons[ l ] = layer;
                 
-                // Create weights of one
-                _neurons[ 0 ][ i ].Weights = new double[ 1 ];
-                _neurons[ 0 ][ i ].Weights[ 0 ] = 1;
-
-                // Create activation function of f(x) = x
-                _neurons[ 0 ][ i ].Function = standardActivationFunction;
-            }
-
-            // Creates bias neruons
-            _neurons[ 0 ][ numInputNeurons ] = new Neuron( function );
-
-            // Create bias array of one long
-            _neurons[ 0 ][ numInputNeurons ].Inputs = new double[ 1 ];
-
-            // Create bias weights of random
-            _neurons[ 0 ][ numInputNeurons ].Weights = new double[ 1 ];
-            _neurons[ 0 ][ numInputNeurons ].Weights[ 0 ] = random.NextDouble( );
-
-            // Create activation function of f(x) = x
-            _neurons[ 0 ][ numInputNeurons ].Function = standardActivationFunction;
-
-            // Loop through each layer of hidden neruon(s)
-            for ( int i = 1; i < _neurons.Length - 1; i++ )
-            {
-                _neurons[ i ] = new Neuron[ numHiddenNeurons[ i - 1] ];
-
-                // Loop through each hidden neuron we need to create in the layer
-                for ( int j = 0; j < numHiddenNeurons[ i - 1 ]; j++ )
+                for ( int n = 0; n < layers[ l ]; n++ )
                 {
-                    // Create the hidden neuron
-                    _neurons[ i ][ j ] = new Neuron( function );
-
-                    // Create weights of size of i-1 layer
-                    _neurons[ i ][ j ].Weights = new double[ _neurons[ i - 1 ].Length ];
-
-                    // Create inputs of size of i-1 layer
-                    _neurons[ i ][ j ].Inputs = new double[ _neurons[ i - 1 ].Length ];
-
-                    // Create the array of randomly assigned weights for each hidden neuron
-                    for ( int k = 0; k < _neurons[ i ][ j ].Weights.Length; k++ )
+                    Neuron neuron = new Neuron( );
+                    Neurons[ l ][ n ] = neuron;
+                    
+                    if ( l != 0 )
                     {
-                        _neurons[ i ][ j ].Weights[ k ] = random.NextDouble( );
+                        var layerPrev = Neurons[ l - 1 ];
+
+                        neuron.Weights = new double[ layerPrev.Length ];
+
+                        for ( int w = 0; w < layers[ l - 1 ]; w++ )
+                        {
+                            neuron.Weights[ w ] = Random.NextDouble( );
+                        }
+
+                        neuron.BiasWeight = Random.NextDouble( );
                     }
-
-                    // Set activator function
-                    _neurons[ i ][ j ].Function = _activatorFunction;
                 }
-
-                // Creates hidden bias neruons
-                _neurons[ 0 ][ numHiddenNeurons[ i - 1 ] ] = new Neuron( function );
-
-                // Create bias array of one long
-                _neurons[ 0 ][ numHiddenNeurons[ i - 1 ] ].Inputs = new double[ 1 ];
-
-                // Create bias weights random
-                _neurons[ 0 ][ numHiddenNeurons[ i - 1 ] ].Weights = new double[ 1 ]; ;
-                _neurons[ 0 ][ numHiddenNeurons[ i - 1 ] ].Weights[ 0 ] = random.NextDouble( );
-
-                // Create activation function of f(x) = x
-                _neurons[ 0 ][ numHiddenNeurons[ i - 1 ] ].Function = standardActivationFunction;
             }
+        }
 
-            // Loop through each output nuron we need to create
-            for ( int i = 0; i < numOutputNeurons; i++ )
-            {
-                // Create output neuron
-                _neurons[ OutputNeurons ][ i ] = new Neuron( function );
+        /// <summary>
+        /// Gets the weight of the given neuron connection
+        /// </summary>
+        /// <param name="layer"></param>
+        /// <param name="neuron"></param>
+        /// <param name="inputNeuron"></param>
+        /// <returns></returns>
+        public double GetWeight( int layer, int neuron, int inputNeuron )
+        {
+            if ( layer == 0 )
+                throw new InvalidNumberOfLayersException( "There are not weights for the first layer" );
+            return Neurons[ layer ][ neuron ].Weights[ inputNeuron ];
+        }
 
-                // Create weights of size of i-1 layer
-                _neurons[ OutputNeurons ][ i ].Weights = new double[ _neurons[ OutputNeurons - 1 ].Length ];
+        /// <summary>
+        /// Returns the output of the neuron
+        /// </summary>
+        /// <param name="layer"></param>
+        /// <param name="neuron"></param>
+        /// <returns></returns>
+        public double GetOutput( int layer, int neuron )
+        {
+            return Neurons[ layer ][ neuron ].Output;
+        }
 
-                // Create inputs of size of i-1 layer
-                _neurons[ OutputNeurons ][ i ].Inputs = new double[ _neurons[ OutputNeurons - 1 ].Length ];
-
-                // Create the array of randomly assigned weights for each hidden neuron
-                for ( int j = 0; j < _neurons[ OutputNeurons - 1 ].Length; j++ )
-                {
-                    _neurons[ OutputNeurons ][ i ].Weights[ j ] = random.NextDouble( );
-                }
-
-                // Set activator function
-                _neurons[ OutputNeurons ][ i ].Function = _activatorFunction;
-            }
+        /// <summary>
+        /// Gets the delta of the previous learning
+        /// </summary>
+        /// <param name="layer"></param>
+        /// <param name="neuron"></param>
+        /// <returns></returns>
+        public double GetDelta( int layer, int neuron )
+        {
+            return Neurons[ layer ][ neuron ].Delta;
         }
 
         /// <summary>
         /// Creates a neural network from a serialized saveFile
         /// </summary>
         /// <param name="saveFile"></param>
-        public NeuralNetwork(NeuralNetworkSaveFile saveFile)
+        public NeuralNetwork( NeuralNetworkSaveFile saveFile )
         {
 
-        }
-
-        /// <summary>
-        /// Combination load/run network
-        /// </summary>
-        /// <param name="inputs"></param>
-        /// <returns></returns>
-        public double[ ] RunNetwork( double[ ] inputs, double[ ] expectedOutputs )
-        {
-            // Check length to avoid any IndexOutOfBoundsExceptions
-            if ( inputs.Length != _neurons[ InputNeurons ].Length - 1 ){ throw new InvalidInputLengthException( "Input length mismatch. Make sure you are inputting to the network correctly." ); }
-            if ( expectedOutputs.Length != _neurons[ OutputNeurons ].Length ) { throw new InvalidInputLengthException( "Expected Output length mismatch. Make sure you are inputting to the network correctly." ); }
-
-            // Save info for back-propogation
-            _inputs = inputs;
-            _expectedOutputs = expectedOutputs;
-            _actualOutputs = RunNetwork( _inputs );
-
-            return _actualOutputs;
         }
 
         /// <summary>
         /// Runs the network and outputs the values of all the output neurons
         /// </summary>
         /// <returns></returns>
-        private double[ ] RunNetwork( double[ ] inputs )
+        public double[ ] RunNetwork( double[ ] inputs )
         {
-            double[ ] outputs = new double[ _neurons[ OutputNeurons ].Length ];
-
-            // Load the input neurons from the input array
-            for ( int i = 0; i < inputs.Length; i++ )
+            var inputsLength = Neurons[ 0 ].Length;
+            if ( inputs.Length != inputsLength )
+                throw new InvalidNumberOfNeuronsException( "Number of inputs and input neurons does not match" );
+            
+            for ( int n = 0; n < Neurons[ 0 ].Length; n++ )
             {
-                _neurons[ InputNeurons ][ i ].Inputs[ 0 ] = inputs[ i ];
+                var neuron = Neurons[ 0 ][ n ];
+                neuron.Output = inputs[ n ];
             }
 
-            // Run the network from the front frowards, ending on each output neuron
-            for ( int i = 0; i < _neurons.Length; i++ )
+            for ( int l = 1; l < Neurons.Length; l++ )
             {
-                // Each neuron in the layer
-                for ( int j = 0; j < _neurons[ i ].Length; j++ )
+                var layer = Neurons[ l ];
+
+                for ( int n = 0; n < layer.Length; n++ )
                 {
-                    var output = 0.0;
+                    var neuron = Neurons[ l ][ n ];
 
-                    // Each weight/input in the neuron, add up to get total output
-                    for ( int k = 0; k < _neurons[ i ][ j ].Inputs.Length; k++ )
+                    var outputSum = 0.0;
+
+                    for ( int w = 0; w < neuron.Weights.Length; w++ )
                     {
-                        output += _neurons[ i ][ j ].Weights[ k ] * _neurons[ i ][ j ].Inputs[ k ];
+                        var layerPrevious = Neurons[ l - 1 ];
+                        outputSum += neuron.Weights[ w ] * layerPrevious[ w ].Output;
                     }
 
-                    // Run through activator function, save to output
-                    _neurons[ i ][ j ].Output = _neurons[ i ][ j ].Function.Execute( output );
+                    outputSum += neuron.BiasWeight;
 
-                    // If not the output layer, add output to every input of the next layer
-                    if ( i != OutputNeurons )
-                    {
-                        for ( int k = 0; k < _neurons[ i + 1 ].Length; k++ )
-                        {
-                            _neurons[ i + 1 ][ k ].Inputs[ j ] = _neurons[ i ][ j ].Output;
-                        }
-                    }
-                    // Else add it to the output array
-                    else
-                    {
-                        outputs[ j ] = _neurons[ i ][ j ].Output;
-                    }
+                    neuron.Output = ActivatorFunction.Execute( outputSum );
                 }
             }
 
-            return outputs;
-        }
-
-        /// <summary>
-        /// Runs the back-propogation to update weights to new, improved values
-        /// </summary>
-        public void BackPropogate( )
-        {
-            // Calculate total error
-            var eTotal = 0.0;
-            for ( int i = 0; i < _neurons[ OutputNeurons ].Length; i++ )
+            var outputNeurons = Neurons[ Neurons.Length - 1 ];
+            var outputNeuronsLength = outputNeurons.Length;
+            var output = new double[ outputNeuronsLength ];
+            for ( int n = 0; n < outputNeuronsLength; n++ )
             {
-                eTotal += .5 * ( _expectedOutputs[ i ] - _actualOutputs[ i ] ) * ( _expectedOutputs[ i ] - _actualOutputs[ i ] );
-                //Console.WriteLine( $"Error total {eTotal}, {_expectedOutputs[i]}, {_actualOutputs[i]}" );
+                Neuron neuron = outputNeurons[ n ];
+                output[ n ] = neuron.Output;
             }
 
-            Console.WriteLine( $"Error total {eTotal}" );
-
-            // Back propogate errors from outputs to the first hidden layer
-            // For every layer in the network
-            for ( int i = OutputNeurons; i > InputNeurons; i-- )
+            return output;
+        }
+    
+        /// <summary>
+        /// Trains the Neural Network by feeding forward, then back propgating
+        /// </summary>
+        public void Train( double[] inputs, double[] targetOutputs )
+        {
+            double[ ] actualOutputs = RunNetwork( inputs );
+            
+            var outputNeuronLayer = Neurons.Length - 1;
+            var outputNeurons = Neurons[ outputNeuronLayer ];
+            var errorTotal = 0.0;
+            for (int n = 0; n < outputNeurons.Length; n++ )
             {
-                // For every neuron in the layer
-                for ( int j = 0; j < _neurons[i].Length; j++ )
+                errorTotal += .5 * ( targetOutputs[ n ] - actualOutputs[ n ] ) * ( targetOutputs[ n ] - actualOutputs[ n ] );
+            }
+
+            TotalError = errorTotal;
+
+            for ( int l = Neurons.Length - 1; l > 0;  l-- )
+            {
+                var layerPrev = Neurons[ l - 1 ];
+                var layer = Neurons[ l ];
+                
+                for ( int n = 0; n < layer.Length; n++ )
                 {
-                    // Uses output delta
-                    if ( i == OutputNeurons )
+                    var neuron = layer[ n ];
+
+                    if ( l == outputNeuronLayer )
                     {
-                        // Calculate delta based on the derivative of the activation function
-                        _neurons[ i ][ j ].Delta = -1 * ( _expectedOutputs[ j ] - _actualOutputs[ j ] ) * _neurons[ i ][ j ].Function.ExecuteDerivative( _actualOutputs[ j ] );
+                        neuron.Delta = -1 * ( targetOutputs[ n ] - neuron.Output ) * ActivatorFunction.ExecuteDerivative( neuron.Output );
                     }
-                    // Uses hidden delta
                     else
                     {
+                        var layerNext = Neurons[ l + 1 ];
                         var wDeltaSum = 0.0;
-                        // Sum delta * weight for every neuron being outputted to
-                        for ( int k = 0; k < _neurons[ i + 1 ].Length; k++ )
+                        for ( int w = 0; w < layerNext.Length; w++ )
                         {
-                            wDeltaSum += _neurons[ i + 1 ][ k ].Delta + _neurons[ i + 1 ][ k ].Weights[ j ];
+                            wDeltaSum = layerNext[ w ].Delta;
                         }
 
-                        // Run through activator function differentiation
-                        var derivedPart = _neurons[ i ][ j ].Function.ExecuteDerivative( _neurons[ i ][ j ].Output);
+                        var derivedPart = ActivatorFunction.ExecuteDerivative( neuron.Output );
 
-                        // Save delta as wDeltaSum * drivedPart
-                        _neurons[ i ][ j ].Delta = -1 * wDeltaSum * derivedPart;
+                        neuron.Delta = -1 * derivedPart * wDeltaSum;
                     }
-                    
-                    // Calculate new weights for each input
-                    for ( int k = 0; k < _neurons[ i ][ j ].Weights.Length; k++ )
+
+                    for ( int w = 0; w < neuron.Weights.Length; w++ )
                     {
-                        // Weight w* = w - a * delta * i;
-                        var wPrime = _neurons[ i ][ j ].Weights[ k ] - _learningRate * _neurons[ i ][ j ].Delta * _neurons[ i ][ j ].Inputs[ k ];
-                        _neurons[ i ][ j ].Weights[ k ] = wPrime;
+                        var wPrime = neuron.Weights[ w ] - LearningRate * neuron.Delta * layerPrev[ w ].Output;
+                        neuron.Weights[ w ] = wPrime;
                     }
+
+                    neuron.BiasWeight = neuron.BiasWeight - LearningRate * neuron.Delta;
                 }
             }
         }
