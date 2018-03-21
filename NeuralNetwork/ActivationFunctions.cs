@@ -25,7 +25,7 @@ namespace NeuralNetwork
         public abstract double Execute( double input );
         public double ExecuteDerivative( double input )
         {
-            return ( Execute( input + H ) - Execute( input - H ) ) / 2 * H;
+            return ( Execute( input + H ) - Execute( input - H ) ) / ( 2 * H );
         }
     }
 
