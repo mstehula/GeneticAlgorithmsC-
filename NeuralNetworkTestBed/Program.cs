@@ -43,12 +43,6 @@ namespace NeuralNetworkTestBed
             }
             Console.WriteLine( " }" );
         }
-
-        public void RunOrNeuralNetwork()
-        {
-            var activationFunction = new SigmoidActivationFunction( );
-            var learningRate = .1;
-        }
         
         public void RunXORNeuralNetwork()
         {
