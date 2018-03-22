@@ -43,20 +43,26 @@ namespace NeuralNetworkTestBed
             }
             Console.WriteLine( " }" );
         }
+
+        public void RunOrNeuralNetwork()
+        {
+            var activationFunction = new SigmoidActivationFunction( );
+            var learningRate = .1;
+        }
         
         public void RunXORNeuralNetwork()
         {
-            var activationFunctionSigmoid = new TanHActivationFunction( );
-            var learningRate = .05;
+            var activationFunction = new SigmoidActivationFunction( );
+            var learningRate = .1;
 
-            XORNetwork = new NeuralNetwork.NeuralNetwork( new int[ ] { 2, 3, 1 }, activationFunctionSigmoid, learningRate );
+            XORNetwork = new NeuralNetwork.NeuralNetwork( new int[ ] { 2, 5, 3, 1 }, activationFunction, learningRate );
 
             var random = new Random( ( int )DateTime.Now.Ticks );
 
             var pass = 0;
             var fail = 0;
             
-            for ( double i = 1; i < 100000; i++ )
+            for ( double i = 1; i < 1000000; i++ )
             {
                 var j = ( int )( random.NextDouble( ) * 2 );
                 var k = ( int )( random.NextDouble( ) * 2 );
@@ -67,7 +73,7 @@ namespace NeuralNetworkTestBed
                 var actualOutputs = XORNetwork.RunNetwork( inputs );
                 XORNetwork.Train( inputs, expectedOutputs );
 
-                if ( ( ( j ^ k ) == 1 && actualOutputs[ 0 ] > .55 ) || ( ( j ^ k ) == 0 && actualOutputs[ 0 ] < .45) )
+                if ( ( ( j ^ k ) == 1 && actualOutputs[ 0 ] > .9 ) || ( ( j ^ k ) == 0 && actualOutputs[ 0 ] < .1 ) )
                 {
                     pass++;
                 }
@@ -75,13 +81,10 @@ namespace NeuralNetworkTestBed
                 {
                     fail++;
                 };
-                
-                //Console.WriteLine( $"{j} | {k} = {j | k}, {actualOutputs[ 0 ]}" );
 
                 if ( i % 100 == 0 )
                 {
-                    Console.WriteLine( $"Pass: {pass}, Fail: {fail}, {( double )pass*100 / ( pass + fail )}% ; " );
-                    Console.WriteLine( $"{j} ^ {k} = {j ^ k}, {actualOutputs[ 0 ]}" );
+                    Console.WriteLine( $"Pass: {pass}, Fail: {fail}, {( double )pass*100 / ( pass + fail )}% ; Total Error: {XORNetwork.TotalError}" );
 
                     if ( fail == 0 )
                     {
@@ -93,7 +96,6 @@ namespace NeuralNetworkTestBed
                     fail = 0;
                 }
             }
-
         }
 
         public static void Main(string[] args)

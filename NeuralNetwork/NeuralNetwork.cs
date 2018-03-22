@@ -12,6 +12,7 @@ namespace NeuralNetwork
         {
             public double BiasWeight { get; set; }
             public double[ ] Weights { get; set; }
+            public double Net { get; set; }
             public double Output { get; set; }
             public double Delta { get; set; }
         }
@@ -153,17 +154,17 @@ namespace NeuralNetwork
                 {
                     var neuron = Neurons[ l ][ n ];
 
-                    var outputSum = 0.0;
+                    neuron.Net = 0.0;
 
                     for ( int w = 0; w < neuron.Weights.Length; w++ )
                     {
                         var layerPrevious = Neurons[ l - 1 ];
-                        outputSum += neuron.Weights[ w ] * layerPrevious[ w ].Output;
+                        neuron.Net += neuron.Weights[ w ] * layerPrevious[ w ].Output;
                     }
 
-                    outputSum += neuron.BiasWeight;
+                    neuron.Net += neuron.BiasWeight;
 
-                    neuron.Output = ActivatorFunction.Execute( outputSum );
+                    neuron.Output = ActivatorFunction.Execute( neuron.Net );
                 }
             }
 
@@ -207,7 +208,7 @@ namespace NeuralNetwork
 
                     if ( l == outputNeuronLayer )
                     {
-                        neuron.Delta = -1 * ( targetOutputs[ n ] - neuron.Output ) * ActivatorFunction.ExecuteDerivative( neuron.Output );
+                        neuron.Delta = -1 * ( targetOutputs[ n ] - neuron.Output ) * ActivatorFunction.ExecuteDerivative( neuron.Net );
                     }
                     else
                     {
@@ -218,7 +219,7 @@ namespace NeuralNetwork
                             wDeltaSum = layerNext[ w ].Delta;
                         }
 
-                        var derivedPart = ActivatorFunction.ExecuteDerivative( neuron.Output );
+                        var derivedPart = ActivatorFunction.ExecuteDerivative( neuron.Net );
 
                         neuron.Delta = -1 * derivedPart * wDeltaSum;
                     }
