@@ -20,7 +20,7 @@ namespace NeuralNetwork
         /// <summary>
         /// 2D list of nuerons, seperated by layer
         /// </summary>
-        private Neuron[ ][ ] Neurons;
+        private List<List<Neuron>> Neurons;
 
         /// <summary>
         /// activator function for a given neural network
@@ -56,11 +56,11 @@ namespace NeuralNetwork
                 }
             }
             
-            Neurons = new Neuron[ layers.Length ][ ];
+            Neurons = new List<List<Neuron>>();
             
             for ( int l = 0; l < layers.Length; l++ )
             {
-                Neuron[ ] layer = new Neuron[ layers[ l ] ];
+                List<Neuron> layer = new List<Neuron>();
                 Neurons[ l ] = layer;
                 
                 for ( int n = 0; n < layers[ l ]; n++ )
@@ -72,7 +72,7 @@ namespace NeuralNetwork
                     {
                         var layerPrev = Neurons[ l - 1 ];
 
-                        neuron.Weights = new double[ layerPrev.Length ];
+                        neuron.Weights = new double[ layerPrev.Count ];
 
                         for ( int w = 0; w < layers[ l - 1 ]; w++ )
                         {
@@ -136,21 +136,21 @@ namespace NeuralNetwork
         /// <returns></returns>
         public double[ ] RunNetwork( double[ ] inputs )
         {
-            var inputsLength = Neurons[ 0 ].Length;
+            var inputsLength = Neurons[ 0 ].Count;
             if ( inputs.Length != inputsLength )
                 throw new InvalidNumberOfNeuronsException( "Number of inputs and input neurons does not match" );
             
-            for ( int n = 0; n < Neurons[ 0 ].Length; n++ )
+            for ( int n = 0; n < Neurons[ 0 ].Count; n++ )
             {
                 var neuron = Neurons[ 0 ][ n ];
                 neuron.Output = inputs[ n ];
             }
 
-            for ( int l = 1; l < Neurons.Length; l++ )
+            for ( int l = 1; l < Neurons.Count; l++ )
             {
                 var layer = Neurons[ l ];
 
-                for ( int n = 0; n < layer.Length; n++ )
+                for ( int n = 0; n < layer.Count; n++ )
                 {
                     var neuron = Neurons[ l ][ n ];
 
@@ -168,8 +168,8 @@ namespace NeuralNetwork
                 }
             }
 
-            var outputNeurons = Neurons[ Neurons.Length - 1 ];
-            var outputNeuronsLength = outputNeurons.Length;
+            var outputNeurons = Neurons[ Neurons.Count - 1 ];
+            var outputNeuronsLength = outputNeurons.Count;
             var output = new double[ outputNeuronsLength ];
             for ( int n = 0; n < outputNeuronsLength; n++ )
             {
@@ -187,22 +187,22 @@ namespace NeuralNetwork
         {
             double[ ] actualOutputs = RunNetwork( inputs );
             
-            var outputNeuronLayer = Neurons.Length - 1;
+            var outputNeuronLayer = Neurons.Count - 1;
             var outputNeurons = Neurons[ outputNeuronLayer ];
             var errorTotal = 0.0;
-            for (int n = 0; n < outputNeurons.Length; n++ )
+            for (int n = 0; n < outputNeurons.Count; n++ )
             {
                 errorTotal += .5 * ( targetOutputs[ n ] - actualOutputs[ n ] ) * ( targetOutputs[ n ] - actualOutputs[ n ] );
             }
 
             TotalError = errorTotal;
 
-            for ( int l = Neurons.Length - 1; l > 0;  l-- )
+            for ( int l = Neurons.Count - 1; l > 0;  l-- )
             {
                 var layerPrev = Neurons[ l - 1 ];
                 var layer = Neurons[ l ];
                 
-                for ( int n = 0; n < layer.Length; n++ )
+                for ( int n = 0; n < layer.Count; n++ )
                 {
                     var neuron = layer[ n ];
 
@@ -214,7 +214,7 @@ namespace NeuralNetwork
                     {
                         var layerNext = Neurons[ l + 1 ];
                         var wDeltaSum = 0.0;
-                        for ( int w = 0; w < layerNext.Length; w++ )
+                        for ( int w = 0; w < layerNext.Count; w++ )
                         {
                             wDeltaSum = layerNext[ w ].Delta;
                         }
