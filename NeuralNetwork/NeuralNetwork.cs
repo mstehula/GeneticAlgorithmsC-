@@ -11,10 +11,15 @@ namespace NeuralNetwork
         private class Neuron
         {
             public double BiasWeight { get; set; }
-            public double[ ] Weights { get; set; }
+            public List<double> Weights { get; set; }
             public double Net { get; set; }
             public double Output { get; set; }
             public double Delta { get; set; }
+
+            public Neuron()
+            {
+                Weights = new List<double>( );
+            }
         }
 
         /// <summary>
@@ -42,13 +47,13 @@ namespace NeuralNetwork
         /// <summary>
         /// Creates neural network from given inputs
         /// </summary>
-        public NeuralNetwork( int[ ] layers, IActivationFunction<double, double> function, double learningRate )
+        public NeuralNetwork( List<int> layers, IActivationFunction<double, double> function, double learningRate )
         {
             ActivatorFunction = function;
             LearningRate = learningRate;
             
-            if ( layers.Length <= 1 ) throw new InvalidNumberOfLayersException( "Number of layers cannot 1 or below" );
-            for ( int i = 0; i < layers.Length; i++ )
+            if ( layers.Count <= 1 ) throw new InvalidNumberOfLayersException( "Number of layers cannot 1 or below" );
+            for ( int i = 0; i < layers.Count; i++ )
             {
                 if ( layers[ i ] <= 0 )
                 {
@@ -56,27 +61,27 @@ namespace NeuralNetwork
                 }
             }
             
-            Neurons = new List<List<Neuron>>();
+            Neurons = new List<List<Neuron>>( layers.Count );
             
-            for ( int l = 0; l < layers.Length; l++ )
+            for ( int l = 0; l < layers.Count; l++ )
             {
-                List<Neuron> layer = new List<Neuron>();
-                Neurons[ l ] = layer;
+                List<Neuron> layer = new List<Neuron>(layers[l]);
+                Neurons.Add( layer );
                 
                 for ( int n = 0; n < layers[ l ]; n++ )
                 {
                     Neuron neuron = new Neuron( );
-                    Neurons[ l ][ n ] = neuron;
+                    layer.Add( neuron );
                     
                     if ( l != 0 )
                     {
                         var layerPrev = Neurons[ l - 1 ];
 
-                        neuron.Weights = new double[ layerPrev.Count ];
+                        neuron.Weights = new List<double>(layerPrev.Count);
 
                         for ( int w = 0; w < layers[ l - 1 ]; w++ )
                         {
-                            neuron.Weights[ w ] = Random.NextDouble( );
+                            neuron.Weights.Add( Random.NextDouble( ) );
                         }
 
                         neuron.BiasWeight = Random.NextDouble( );
@@ -136,7 +141,8 @@ namespace NeuralNetwork
         /// <returns></returns>
         public double[ ] RunNetwork( double[ ] inputs )
         {
-            var inputsLength = Neurons[ 0 ].Count;
+            
+            var inputsLength = Neurons.First( ).Count;
             if ( inputs.Length != inputsLength )
                 throw new InvalidNumberOfNeuronsException( "Number of inputs and input neurons does not match" );
             
@@ -156,7 +162,7 @@ namespace NeuralNetwork
 
                     neuron.Net = 0.0;
 
-                    for ( int w = 0; w < neuron.Weights.Length; w++ )
+                    for ( int w = 0; w < neuron.Weights.Count; w++ )
                     {
                         var layerPrevious = Neurons[ l - 1 ];
                         neuron.Net += neuron.Weights[ w ] * layerPrevious[ w ].Output;
@@ -224,7 +230,7 @@ namespace NeuralNetwork
                         neuron.Delta = -1 * derivedPart * wDeltaSum;
                     }
 
-                    for ( int w = 0; w < neuron.Weights.Length; w++ )
+                    for ( int w = 0; w < neuron.Weights.Count; w++ )
                     {
                         var wPrime = neuron.Weights[ w ] - LearningRate * neuron.Delta * layerPrev[ w ].Output;
                         neuron.Weights[ w ] = wPrime;

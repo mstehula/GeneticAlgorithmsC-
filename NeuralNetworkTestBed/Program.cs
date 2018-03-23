@@ -49,7 +49,7 @@ namespace NeuralNetworkTestBed
             var activationFunction = new TanHActivationFunction( );
             var learningRate = .05;
 
-            XORNetwork = new NeuralNetwork.NeuralNetwork( new int[ ] { 2, 3, 1 }, activationFunction, learningRate );
+            XORNetwork = new NeuralNetwork.NeuralNetwork( new List<int> { 2, 3, 1 }, activationFunction, learningRate );
 
             var random = new Random( ( int )DateTime.Now.Ticks );
 
