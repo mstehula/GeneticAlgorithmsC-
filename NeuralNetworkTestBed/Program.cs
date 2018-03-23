@@ -21,6 +21,10 @@ namespace NeuralNetworkTestBed
             Console.WriteLine( $"{sigmoidActivationFunction.ExecuteDerivative( 1.0 )}");
             Console.WriteLine( );
 
+            Console.WriteLine( "SumTest" );
+            SumTest( );
+            Console.WriteLine( );
+
             Console.WriteLine( "Running Test Network Test: " );
             //RunTestNeuralNetwork( );
             Console.WriteLine( );
@@ -31,17 +35,25 @@ namespace NeuralNetworkTestBed
 
             while ( true ) ;
         }
-        
-        public void PrintArray(double[] input)
+
+        public class SumTestClass
         {
-            Console.Write( "{ " );
-            for( int i = 0; i < input.Length; i++ )
+            public double Output;
+
+            public double CalculateOutput(double input )
             {
-                Console.Write( $"{Math.Truncate(input[ i ] * 100)/100}" );
-                if ( i != input.Length - 1 )
-                    Console.Write( ", " );
+                return Output = input * 5;
             }
-            Console.WriteLine( " }" );
+        }
+
+        public void SumTest( )
+        {
+            var input = 1.0;
+            var addList = new List<SumTestClass> { new SumTestClass( ), new SumTestClass(), new SumTestClass() };
+
+            var sum = addList.Sum( s => s.CalculateOutput( input ) );
+
+            Console.WriteLine(sum);
         }
         
         public void RunXORNeuralNetwork()
@@ -53,19 +65,42 @@ namespace NeuralNetworkTestBed
 
             var random = new Random( ( int )DateTime.Now.Ticks );
 
+            var totalError = 0.0;
+
             var pass = 0;
             var fail = 0;
             
-            for ( double i = 1; i < 1000000; i++ )
+            for ( double i = 1; i < 10000; i++ )
             {
                 var j = ( int )( random.NextDouble( ) * 2 );
                 var k = ( int )( random.NextDouble( ) * 2 );
 
-                var inputs = new double[] { j, k };
-                var expectedOutputs = new double[] { j ^ k };
+                var inputs = new List<double> { j, k };
+                var expectedOutputs = new List<double> { j ^ k };
 
-                var actualOutputs = XORNetwork.RunNetwork( inputs );
                 XORNetwork.Train( inputs, expectedOutputs );
+                var actualOutputs = XORNetwork.GetOutputs();
+
+                /*
+                Console.Write( XORNetwork.GetOutput( 0, 0 ) + " " );
+                Console.Write( XORNetwork.GetDelta( 0, 0 ) + " " );
+                Console.Write( XORNetwork.GetBias( 0, 0 ) + " " );
+                Console.WriteLine( );
+
+                Console.Write( XORNetwork.GetOutput( 1, 0 ) + " " );
+                Console.Write( XORNetwork.GetDelta( 1, 0 ) + " " );
+                Console.Write( XORNetwork.GetWeight( 1, 0, 0 ) + " " );
+                Console.Write( XORNetwork.GetBias( 1, 0 ) + " " );
+                Console.WriteLine( );
+
+                Console.Write( XORNetwork.GetOutput( 2, 0 ) + " " );
+                Console.Write( XORNetwork.GetDelta( 2, 0 ) + " " );
+                Console.Write( XORNetwork.GetWeight( 2, 0, 0 ) + " " );
+                Console.Write( XORNetwork.GetBias( 2, 0 ) + " " );
+                Console.WriteLine( actualOutputs[ 0 ] );
+                */
+
+                totalError += XORNetwork.GetError( );
 
                 if ( ( ( j ^ k ) == 1 && actualOutputs[ 0 ] > .9 ) || ( ( j ^ k ) == 0 && actualOutputs[ 0 ] < .1 ) )
                 {
@@ -78,7 +113,7 @@ namespace NeuralNetworkTestBed
 
                 if ( i % 100 == 0 )
                 {
-                    Console.WriteLine( $"Pass: {pass}, Fail: {fail}, {( double )pass*100 / ( pass + fail )}% ; Total Error: {XORNetwork.TotalError}" );
+                    Console.WriteLine( $"Pass: { pass }, Fail: { fail }, { ( double )pass*100 / ( pass + fail ) }% ; Total Error: { totalError/100 }" );
 
                     if ( fail == 0 )
                     {
@@ -88,6 +123,7 @@ namespace NeuralNetworkTestBed
 
                     pass = 0;
                     fail = 0;
+                    totalError = 0;
                 }
             }
         }
